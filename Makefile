@@ -46,7 +46,10 @@ LDFLAGS=$(ARCH) $(SPECS)
 test: clean build
 	mgba-qt $(BIN)/$(TARGET).gba
 
-build: $(TARGET).gba
+build: $(IWRAM_SRC) $(SRC) $(BIN) $(TARGET).gba
+
+$(IWRAM_SRC) $(SRC) $(BIN):
+	mkdir -p $@
 
 $(TARGET).gba: $(TARGET).elf
 	$(OBJ_CPY) -v -O binary $(BIN)/$< $(BIN)/$@

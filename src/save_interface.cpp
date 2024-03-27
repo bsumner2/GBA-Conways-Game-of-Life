@@ -563,7 +563,6 @@ void calc_prompt_len(void) {
 
 
 void Display_Preview(const Save_Slot_t *save, int slot_no) {
-  Mode3_puts("[Loading Preview]", 0, 0, 0x7FFF);
   {  // Preview Loading
     int startx = (SCREEN_WIDTH-GRID_WIDTH)>>1, starty = (SCREEN_HEIGHT-GRID_HEIGHT)>>1;
     u16_t *vram_line;
@@ -582,9 +581,6 @@ void Display_Preview(const Save_Slot_t *save, int slot_no) {
       }
     }
   }
-  vsync();
-  // Overwrite Loading message with black text to pseudo-erase it.
-  Mode3_puts("[Loading Preview]", 0, 0, 0); 
   vsync();
   Mode3_printf(0, 0, 0x7fff, "Previewing Slot no. %d: %s\n\x1b[0x001F]B:\x1b[0x7FFF] Exit Preview", slot_no, save->slot_name);
   while (!KEY_PRESSED(B))
@@ -608,9 +604,7 @@ void Draw_Save_Prompt_Directions(void) {
   prompt_square.FillDraw(PROMPT_BG);
   Mode3_printf(SCREEN_WIDTH - prompt_directions_message_width, 
       SCREEN_HEIGHT - prompt_directions_message_height, 0x7fff, PROMPT_DIRECTIONS_WITH_COLOR_CODES);
-
 }
-
 
 int Prompt_Load_Slot(Save_Slot_t *saves, int num_saves) {
   Mode3::Rect selection_square(SLOT_DISPLAY_WIDTH, SLOT_DISPLAY_HEIGHT, SLOT_X_ALIGNMENT, SLOT_Y_ALIGNMENT);
@@ -622,6 +616,9 @@ int Prompt_Load_Slot(Save_Slot_t *saves, int num_saves) {
   Mode3_printf(selection_square.x + SLOT_BORDER_LEN + SLOT_TEXT_LEFT_PAD,
       selection_square.y + SLOT_BORDER_LEN, SLOT_SEL_FG, "%d) %s", curr+1, saves[curr].slot_name);
   
+  Mode3_printf(0, 0, (num_saves == MAX_SAVES) ? 0x001F : (num_saves > MAX_SAVES>>1) ? 0x02DF : 0x03E0, "[ %d / %d ] \x1b[0x7FFF]Slots Used", num_saves, MAX_SAVES);
+  
+  
   while (1) {
     vsync();
     if (KEY_PRESSED(A)) {
@@ -632,9 +629,13 @@ int Prompt_Load_Slot(Save_Slot_t *saves, int num_saves) {
       return -1;
     } else if (KEY_PRESSED(SEL)) {
       DEBOUNCE_KEY(SEL);
+      
 
-
-      {// Erase slot and nav prompt from vram
+      // Draw over slots text with black.
+      Mode3_printf(0, 0, 0, "[ %d / %d ] Slots Used", num_saves, MAX_SAVES);
+      
+      {
+        // Erase slot and nav prompt from vram
         Mode3::Rect prompt_square(prompt_directions_message_width, prompt_directions_message_height, 
           SCREEN_WIDTH - prompt_directions_message_width, SCREEN_HEIGHT - prompt_directions_message_height);
         prompt_square.FillDraw(0);
@@ -643,6 +644,9 @@ int Prompt_Load_Slot(Save_Slot_t *saves, int num_saves) {
       
       vsync();
       Display_Preview(saves + curr, curr+1);
+      
+      // Redraw slot sel UI.
+      Mode3_printf(0, 0, (num_saves == MAX_SAVES) ? 0x001F : (num_saves > MAX_SAVES>>1) ? 0x02DF : 0x03E0, "[ %d / %d ] \x1b[0x7FFF]Slots Used", num_saves, MAX_SAVES);
       Draw_Save_Prompt_Directions();
       skip_nav_button_check = true;
     }
@@ -722,6 +726,8 @@ int Prompt_Save_Slot(Save_Slot_t *saves, int num_saves) {
   Draw_Save_Prompt_Directions();
   Mode3_puts(NEW_SAVE_TXT, selection_square.x + SLOT_BORDER_LEN + SLOT_TEXT_LEFT_PAD, selection_square.y + SLOT_BORDER_LEN, SLOT_SEL_FG);
 
+  Mode3_printf(0, 0, (num_saves == MAX_SAVES) ? 0x001F : (num_saves > MAX_SAVES>>1) ? 0x02DF : 0x03E0, "[ %d / %d ] \x1b[0x7FFF]Slots Used", num_saves, MAX_SAVES);
+  
   vsync();
 
   if (saves == nullptr) {
@@ -775,9 +781,10 @@ int Prompt_Save_Slot(Save_Slot_t *saves, int num_saves) {
       DEBOUNCE_KEY(SEL);
       if (newslot)
         continue;
-
-      {// Erase slots display and nav prompt from vram
-      
+      // Erase slot count 
+      Mode3_printf(0, 0, 0, "[ %d / %d ] Slots Used", num_saves, MAX_SAVES);
+      {
+        // Erase slots display and nav prompt from vram 
         Mode3::Rect prompt_square(prompt_directions_message_width, prompt_directions_message_height, 
           SCREEN_WIDTH - prompt_directions_message_width, SCREEN_HEIGHT - prompt_directions_message_height);
         prompt_square.FillDraw(0);
@@ -786,6 +793,9 @@ int Prompt_Save_Slot(Save_Slot_t *saves, int num_saves) {
       }
       vsync();
       Display_Preview(saves + curr, curr+1);
+      
+      // Redraw slot sel UI.
+      Mode3_printf(0, 0, (num_saves == MAX_SAVES) ? 0x001F : (num_saves > MAX_SAVES>>1) ? 0x02DF : 0x03E0, "[ %d / %d ] \x1b[0x7FFF]Slots Used", num_saves, MAX_SAVES);
       Draw_Save_Prompt_Directions();
       redraw_after_preview = true;
 
@@ -836,14 +846,15 @@ int Prompt_Save_Slot(Save_Slot_t *saves, int num_saves) {
 
     if (KEY_PRESSED(L)) {
       DEBOUNCE_KEY(L);
+
       if (--curr < 0)
         curr = num_saves - 1;
-      redraw_slot_dpy = true;
+      redraw_slot_dpy = num_saves != 1;
     } else if (KEY_PRESSED(R)) {
       DEBOUNCE_KEY(R);
       if (++curr >= num_saves)
         curr = 0;
-      redraw_slot_dpy = true;
+      redraw_slot_dpy = num_saves != 1;
     }
 
     if (redraw_slot_dpy) {
@@ -856,7 +867,7 @@ int Prompt_Save_Slot(Save_Slot_t *saves, int num_saves) {
       redraw_slot_dpy = false;
     }
   } 
-  return 0; 
+  return -1; 
 }
 
 bool_t State_SaveGame(bool_t *cur_buf) {
@@ -938,8 +949,9 @@ bool_t Load_SaveGame(bool_t *cur_buf) {
   saves = _g_saves;
   SRAM_Read(saves, 4, saves_len);
   outcome = Prompt_Load_Slot(saves, num_saves);
-  if (0 > outcome)
+  if (0 > outcome) {
     return false;
+  }
 
   load_buf(cur_buf, &saves[outcome]);
   memset(VIDEO_BUF, 0, SCREEN_WIDTH*SCREEN_HEIGHT*sizeof(u16_t));

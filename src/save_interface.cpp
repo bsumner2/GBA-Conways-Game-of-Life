@@ -12,21 +12,19 @@
 #include <cstdlib>
 #include <cstring>
 
-#define MAX_SAVES 4
+
+static const int GRID_BITPACK_ROWLEN = GRID_WIDTH/8;
 
 typedef struct {
   char slot_name[16];
-  u8_t grid_state[grid_bytelen];
+  u8_t grid_state[GRID_BITPACK_ROWLEN*GRID_HEIGHT];
 } Save_Slot_t;
 
-typedef struct {
-  char slot_name[16];
-  u8_t grid_state[GRID_WIDTH*GRID_HEIGHT/8];
-} Save_Slot_New_t;
+
+#define MAX_SAVES (((2<<16)-5)/sizeof(Save_Slot_t))
 
 
 EWRAM_BSS Save_Slot_t _g_saves[MAX_SAVES];
-
 
 
 #define SAVE_SLOTS_PER_PAGE 1
@@ -567,17 +565,22 @@ void calc_prompt_len(void) {
 void Display_Preview(const Save_Slot_t *save, int slot_no) {
   Mode3_puts("[Loading Preview]", 0, 0, 0x7FFF);
   {  // Preview Loading
-     int startx = (SCREEN_WIDTH-GRID_WIDTH)>>1, starty = (SCREEN_HEIGHT-GRID_HEIGHT)>>1;
-     u16_t *vram_line;
-     const bool_t *grid_line;
-     for (int i = 0; i < GRID_HEIGHT; ++i) {
-       vram_line = VIDEO_BUF + SCREEN_WIDTH*(starty+i) + startx;
-       grid_line = (save->grid_state) + GRID_WIDTH*i;
-      for (int j = 0; j < GRID_WIDTH; ++j) {
-        vram_line[j] = grid_line[j]?0x7FFF:0;
+    int startx = (SCREEN_WIDTH-GRID_WIDTH)>>1, starty = (SCREEN_HEIGHT-GRID_HEIGHT)>>1;
+    u16_t *vram_line;
+
+    const u8_t *grid_state = save->grid_state, *save_line;
+    u8_t curr_byte;
+     
+    for (int i = 0; i < GRID_HEIGHT; ++i) {
+      vram_line = VIDEO_BUF + SCREEN_WIDTH*(starty+i) + startx;
+      save_line = grid_state + GRID_BITPACK_ROWLEN*i;
+      for (int j = 0; j < GRID_BITPACK_ROWLEN; ++j) {
+        curr_byte = *save_line++;
+        for (int k = 0; k < 8; ++k) {
+          *vram_line++ = (curr_byte&(1<<k))?0x7FFF:0;
+        }
       }
-     }
-    
+    }
   }
   vsync();
   // Overwrite Loading message with black text to pseudo-erase it.
@@ -670,6 +673,42 @@ int Prompt_Load_Slot(Save_Slot_t *saves, int num_saves) {
 
   }
 
+
+}
+
+void load_buf(bool_t *dst, const Save_Slot_t *src) {
+
+  bool_t *dst_row;
+  const u8_t *grid_state = src->grid_state, *src_row;
+  u8_t curr_byte;
+  for (int i = 0; i < GRID_HEIGHT; ++i) {
+    dst_row = dst + i*GRID_WIDTH;
+    src_row = grid_state + i*GRID_BITPACK_ROWLEN;
+    
+    for (int j = 0; j < GRID_BITPACK_ROWLEN; ++j) {  
+      curr_byte = *src_row++;
+      for (int k = 0; k < 8; ++k)
+        *dst_row++ = (0!=(curr_byte&(1<<k)));
+    }
+  }
+}
+
+void save_buf(Save_Slot_t *dst, const bool_t *src) {
+  const bool_t *src_row;
+  u8_t *save_grid = dst->grid_state, *dst_row, curr_byte;
+  for (int i = 0; i < GRID_HEIGHT; ++i) {
+    src_row = src + GRID_WIDTH*i;
+    dst_row = save_grid + GRID_BITPACK_ROWLEN*i;
+
+    for (int j = 0; j < GRID_BITPACK_ROWLEN; ++j) {
+      curr_byte = 0;
+      for (int k = 0; k < 8; ++k)
+        if (*src_row++)
+          curr_byte |= (1<<k);
+
+      *dst_row++ = curr_byte;
+    }
+  }
 
 }
 
@@ -847,8 +886,9 @@ bool_t State_SaveGame(bool_t *cur_buf) {
   vsync();
   if (outcome == num_saves) {
     // First, prompt user to give save state name.
-    char slotname[16] = {0};
-    if (0 > Mode3_gets(slotname, 15)) {
+    Save_Slot_t tmp;
+    memset(&tmp.slot_name, 0, sizeof(tmp.slot_name));
+    if (0 > Mode3_gets(tmp.slot_name, 15)) {
       vsync();
       memset(VIDEO_BUF, 0, SCREEN_WIDTH*SCREEN_HEIGHT*sizeof(u16_t));
       return false;
@@ -858,23 +898,21 @@ bool_t State_SaveGame(bool_t *cur_buf) {
     SRAM_Write(&num_saves, 0, 4);
     vsync();
     memset(VIDEO_BUF, 0, SCREEN_WIDTH*SCREEN_HEIGHT*sizeof(u16_t));
-    SRAM_Write(slotname, 4 + saves_len, 16);
-    SRAM_Write(cur_buf, 4 + saves_len + 16, grid_bytelen);
+    save_buf(&tmp, cur_buf);
+    SRAM_Write(&tmp, 4+saves_len, sizeof(tmp));
     return true;
   }
 
-  char slotname[16];
-  memcpy(slotname, saves[outcome].slot_name, sizeof(char[16]));
-  if (0 > Mode3_gets(slotname, 15)) {
+  Save_Slot_t tmp = saves[outcome];
+  if (0 > Mode3_gets(tmp.slot_name, 15)) {
     vsync();
     memset(VIDEO_BUF, 0, SCREEN_WIDTH*SCREEN_HEIGHT*sizeof(u16_t));
     return false;
   }
   vsync();
   memset(VIDEO_BUF, 0, SCREEN_WIDTH*SCREEN_HEIGHT*sizeof(u16_t)); 
-  SRAM_Write(slotname, 4+outcome*sizeof(Save_Slot_t), 16);
-  SRAM_Write(cur_buf, 4+outcome*sizeof(Save_Slot_t) + 16, grid_bytelen);
-
+  save_buf(&tmp, cur_buf);
+  SRAM_Write(&tmp, 4 + outcome*sizeof(Save_Slot_t), sizeof(Save_Slot_t));
   return true;
   
 }
@@ -903,9 +941,8 @@ bool_t Load_SaveGame(bool_t *cur_buf) {
   if (0 > outcome)
     return false;
 
-  memcpy(cur_buf, saves[outcome].grid_state, grid_bytelen);
+  load_buf(cur_buf, &saves[outcome]);
   memset(VIDEO_BUF, 0, SCREEN_WIDTH*SCREEN_HEIGHT*sizeof(u16_t));
-
   return true;
 }
 

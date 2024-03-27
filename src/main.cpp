@@ -779,7 +779,6 @@ void calculate_msg_widths(void) {
   }
 }
 
-
 int main(void) {
 #ifndef _TESTING_SAVE_SLOTS_
   calculate_msg_widths();

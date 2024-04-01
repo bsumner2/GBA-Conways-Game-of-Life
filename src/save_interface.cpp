@@ -21,7 +21,7 @@ typedef struct {
 } Save_Slot_t;
 
 
-#define MAX_SAVES (((2<<16)-5)/sizeof(Save_Slot_t))
+#define MAX_SAVES (((1<<16)-5)/sizeof(Save_Slot_t))
 
 
 EWRAM_BSS Save_Slot_t _g_saves[MAX_SAVES];

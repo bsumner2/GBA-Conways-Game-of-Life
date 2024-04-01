@@ -12,7 +12,8 @@ extern "C" {
 // Have variable data stored in EWRAM
 #define EWRAM_DATA __attribute__((section(".ewram")))
 
-// Have uninitialized variable data stored in EWRAM
+
+// Have uninitialized variable data stored in EWRAM ((WITHOUT USING UP ROM SPACE))
 #define EWRAM_BSS __attribute__((section(".sbss")))
 
 // Store function in IWRAM

@@ -25,10 +25,16 @@ extern "C" {
 
 #define SELECTED_COLOR GREEN_MASK
 
+#define CLEAR_SCREEN fast_memset32(VIDEO_BUF, 0, (SCREEN_WIDTH*SCREEN_HEIGHT*sizeof(u16_t))/sizeof(u32_t))
+
 typedef bool_t GridRow[GRID_WIDTH];
 
 #ifndef _CONWAY_SRC_FILE_
 extern bool_t bufa[GRID_HEIGHT][GRID_WIDTH], bufb[GRID_HEIGHT][GRID_WIDTH];
+
+extern void fast_memset32(void *dst, u32_t val, size_t word_ct) IWRAM_CODE;
+
+void fast_memcpy32(void *dst, void *src, size_t word_ct) IWRAM_CODE;
 
 static const size_t grid_bytelen = sizeof(bufb);
 #endif

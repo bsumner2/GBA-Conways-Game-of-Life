@@ -48,6 +48,8 @@ static const int SLOT_Y_ALIGNMENT = ((SCREEN_HEIGHT - (SAVE_SLOTS_PER_PAGE+1)*SL
 #define PROMPT_DIRECTIONS_WITH_COLOR_CODES "\x1b[0x001F]B: Cancel \x1b[0x03E0]A: Confirm\n\x1b[0x6371]L,R: Navigate Saves \x1b[0x7DA5]Select: Preview"
 #define PROMPT_DIRECTIONS_MSG_LEN 46
 
+
+
 static int prompt_directions_message_width = 0;
 static int prompt_directions_message_height = 0;
 
@@ -886,29 +888,28 @@ bool_t State_SaveGame(bool_t *cur_buf) {
     saves = _g_saves;
     SRAM_Read(saves, 4, saves_len);
   }
-  memset(VIDEO_BUF, 0, SCREEN_WIDTH*SCREEN_HEIGHT*sizeof(u16_t));
   vsync();
   int outcome = Prompt_Save_Slot(saves, num_saves);
   if (outcome == -1) {
     return false;
   }
   
-  memset(VIDEO_BUF, 0, SCREEN_WIDTH*SCREEN_HEIGHT*sizeof(u16_t));
+  CLEAR_SCREEN;
   vsync();
   if (outcome == num_saves) {
     // First, prompt user to give save state name.
-    Save_Slot_t tmp;
-    memset(&tmp.slot_name, 0, sizeof(tmp.slot_name));
+    Save_Slot_t tmp = {0};
+    
     if (0 > Mode3_gets(tmp.slot_name, 15)) {
       vsync();
-      memset(VIDEO_BUF, 0, SCREEN_WIDTH*SCREEN_HEIGHT*sizeof(u16_t));
+      CLEAR_SCREEN;
       return false;
     }
     // Then increment save count.
     ++num_saves;
     SRAM_Write(&num_saves, 0, 4);
     vsync();
-    memset(VIDEO_BUF, 0, SCREEN_WIDTH*SCREEN_HEIGHT*sizeof(u16_t));
+    CLEAR_SCREEN;
     save_buf(&tmp, cur_buf);
     SRAM_Write(&tmp, 4+saves_len, sizeof(tmp));
     return true;
@@ -917,11 +918,11 @@ bool_t State_SaveGame(bool_t *cur_buf) {
   Save_Slot_t tmp = saves[outcome];
   if (0 > Mode3_gets(tmp.slot_name, 15)) {
     vsync();
-    memset(VIDEO_BUF, 0, SCREEN_WIDTH*SCREEN_HEIGHT*sizeof(u16_t));
+    CLEAR_SCREEN;
     return false;
   }
   vsync();
-  memset(VIDEO_BUF, 0, SCREEN_WIDTH*SCREEN_HEIGHT*sizeof(u16_t)); 
+  CLEAR_SCREEN;
   save_buf(&tmp, cur_buf);
   SRAM_Write(&tmp, 4 + outcome*sizeof(Save_Slot_t), sizeof(Save_Slot_t));
   return true;
@@ -954,7 +955,7 @@ bool_t Load_SaveGame(bool_t *cur_buf) {
   }
 
   load_buf(cur_buf, &saves[outcome]);
-  memset(VIDEO_BUF, 0, SCREEN_WIDTH*SCREEN_HEIGHT*sizeof(u16_t));
+  CLEAR_SCREEN;
   return true;
 }
 

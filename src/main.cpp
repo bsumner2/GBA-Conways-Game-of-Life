@@ -11,6 +11,7 @@
 #include "clr_btn.h"
 #include "save_btn.h"
 #include "load_btn.h"
+#include "help_btn.h"
 #include "verdana.h"
 #include "conway.h"
 #include <cstdlib>
@@ -82,23 +83,7 @@ typedef struct {
 extern int Prompt_Save_Slot(Save_Slot_t *saves, int num_saves);
 #endif
 
-static void fast_memset32(void *dst, u8_t val, size_t byte_len) {
-  size_t word_ct = byte_len>>2;
-  u32_t word_val = (val<<24)|(val<<16)|(val<<8)|val;
-  byte_len &= 3;  // Remainder
-  u32_t *dst32 = (u32_t*)dst;
-  u8_t *remainder = (u8_t*)(dst = (void*) (dst32+word_ct));
-  while (&(*dst32++ = word_val) != dst)
-    continue;
-  if (byte_len&2) {
-    if (byte_len&1)
-      remainder[2] = val;
-    *((u16_t*)dst) = word_val&0xFFFF;
-    
-  } else if (byte_len&1) {
-    *remainder = val;
-  }
-}
+
 
 #define SAVE_STATUS_MESSAGE "State saved to cartridge."
 #define SAVE_MSG_LEN 25
@@ -126,7 +111,7 @@ void redraw_buf(void) {
 UX_Button 
           save_state_btn((u16_t*)save_btn, 
               [](void* arg) -> void {
-                memset(VIDEO_BUF, 0, sizeof(u16_t)*SCREEN_WIDTH*SCREEN_HEIGHT);
+                CLEAR_SCREEN;
                 if (State_SaveGame((bool_t*)cur_buf)) {
                   Mode3::Rect block(SAVE_MESSAGE_WIDTH, verdana_GlyphHeight, 0, SCREEN_HEIGHT - verdana_GlyphHeight);
                   block.FillDraw(0x0C84);
@@ -140,9 +125,10 @@ UX_Button
                 pause_menu_draw_ui(true);
 
               },save_btn_width, save_btn_height, 4, 4),
+
           load_state_btn((u16_t*)load_btn, 
               [](void* arg) -> void {
-                memset(VIDEO_BUF, 0, sizeof(u16_t)*SCREEN_WIDTH*SCREEN_HEIGHT);
+                CLEAR_SCREEN;
                 if (Load_SaveGame((bool_t*)back_buf)) {
                   swap_bufs();
                   Mode3::Rect block(LOAD_MESSAGE_WIDTH, verdana_GlyphHeight, 0, SCREEN_HEIGHT - verdana_GlyphHeight);
@@ -157,37 +143,47 @@ UX_Button
                 pause_menu_draw_ui(true);
               }, load_btn_width, load_btn_height,
               4, save_state_btn.y + save_state_btn.height + 4),
+
           draw_btn((u16_t*)pencil_btn, 
               [](void *arg) -> void {
                 *((SimState*)arg) = SimState::PAUSE_DRAW;
                 unpause_redraw(false);
               }, pencil_btn_width, pencil_btn_height, 
               4, load_state_btn.y + load_state_btn.height + 4), 
+
           erase_btn((u16_t*)eraser_btn,
               [](void *arg) {
                 *((SimState*)arg) = SimState::PAUSE_ERASE;
                 unpause_redraw(false);
               }, eraser_btn_width, eraser_btn_height, 
               4, draw_btn.height + draw_btn.y + 4), 
+
           clear_btn((u16_t*)clr_btn, 
               [](void *arg) {
-                fast_memset32(bufa, 0, sizeof(bufa)); 
-                fast_memset32(bufb, 0, sizeof(bufb)); 
-                fast_memset32(VIDEO_BUF, 0, 
-                    sizeof(u16_t)*SCREEN_WIDTH*SCREEN_HEIGHT);
+                CLEAR_SCREEN;
+                fast_memset32(bufa, 0, sizeof(bufa)/sizeof(u32_t));
+                fast_memset32(bufb, 0, sizeof(bufb)/sizeof(u32_t));
                 unpause_redraw(false);
                 pause_menu_draw_ui(true);
                 return;
               }, clr_btn_width, clr_btn_height, 4, 
-              erase_btn.y + erase_btn.height + 4);
+              erase_btn.y + erase_btn.height + 4),
 
-static const int ui_btn_ct = 5;
+          help_menu_btn((u16_t*)help_btn, 
+              [](void *arg) {
+
+                
+              }, help_btn_width, help_btn_height, 4,
+              clear_btn.y + clear_btn.height + 4);
+
+static const int ui_btn_ct = 6;
 static const UX_Button ui_buttons[ui_btn_ct] = {
   save_state_btn,
   load_state_btn,
   draw_btn,
   erase_btn,
-  clear_btn
+  clear_btn,
+  help_menu_btn
 };
 
 

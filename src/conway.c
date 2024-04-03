@@ -23,3 +23,4 @@ void fast_memset32(void *dst, u8_t val, size_t byte_len) {
 }
 
 */
+

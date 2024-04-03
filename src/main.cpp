@@ -2,6 +2,7 @@
 #include "bmp_types.hpp"
 #include "gba_def.h"
 #include "gba_functions.h"
+#include "gba_inlines.h"
 #include "gba_stdio.h"
 #include "vec.hpp"
 
@@ -169,10 +170,26 @@ UX_Button
               }, clr_btn_width, clr_btn_height, 4, 
               erase_btn.y + erase_btn.height + 4),
 
+
+
           help_menu_btn((u16_t*)help_btn, 
               [](void *arg) {
-
-                
+                CLEAR_SCREEN;
+                vsync();
+                Mode3::Rect help_directions_bg(192, 128, SCREEN_WIDTH/2-96, SCREEN_HEIGHT/2-64);
+                help_directions_bg.FillDraw(0x10A5);
+                help_directions_bg.OutlineDraw(1, 0x214A);
+                Mode3_printf(help_directions_bg.x + 2, help_directions_bg.y+2, 0x7FFF, 
+                    "Controls:\n\x1b[0x03E0][Start]: \x1b[0x7fff]Pause/Unpause the simulation\n\x1b[0x7E6C]"
+                    "[A]: \x1b[0x7FFF]Select a pause menu option,\n   (Draw/Erase Mode: Edit grid cell)\n"
+                    "\x1b[0x001F][B]: \x1b[0x7FFF]Boost cursor move speed\n\x1b[0x7C00][Select]: \x1b[0x7FFF]\n     (Draw/Erase Mode: Back to pause menu)\n");
+                Mode3_printf(help_directions_bg.x + 2, help_directions_bg.y + help_directions_bg.height - 2 - verdana_GlyphHeight, 0x7FFF, "Press \x1b[0x001F][B]\x1b[0x7FFF] to exit help screen");
+                while (!KEY_PRESSED(B))
+                  vsync();
+                DEBOUNCE_KEY(B);
+                help_directions_bg.FillDraw(0);
+                redraw_buf();
+                pause_menu_draw_ui(true);
               }, help_btn_width, help_btn_height, 4,
               clear_btn.y + clear_btn.height + 4);
 

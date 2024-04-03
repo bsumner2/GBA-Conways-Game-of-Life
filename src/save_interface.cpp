@@ -49,7 +49,6 @@ static const int SLOT_Y_ALIGNMENT = ((SCREEN_HEIGHT - (SAVE_SLOTS_PER_PAGE+1)*SL
 #define PROMPT_DIRECTIONS_MSG_LEN 46
 
 
-
 static int prompt_directions_message_width = 0;
 static int prompt_directions_message_height = 0;
 

@@ -5,14 +5,21 @@
 extern "C" {
 #endif  /* Name mangler protection */
 
+
 #include "gba_def.h"
 #include "gba_types.h"
 #include "gba_bitfield_macros.h"
 #include "gba_util_macros.h"
 
+extern void BIOS_vsync(void);
+
 STAT_INLN void vsync(void) {
+#ifdef USE_BIOS_VSYNC
+  BIOS_vsync();
+#else
   while (REG_DISPLAY_VCOUNT >= 160);  // Get out of VBlank if not already.
   while (REG_DISPLAY_VCOUNT < 160);  // Wait till next VBlank before continuing.
+#endif
 }
 
 

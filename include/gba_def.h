@@ -68,6 +68,7 @@ extern "C" {
 #define REG_IME *((vu16_t*) (MEM_IO + 0x0208))
 #define REG_IE  *((vu16_t*) (MEM_IO + 0x0200))
 #define REG_IF  *((vu16_t*) (MEM_IO + 0x0202))
+#define REG_IFBIOS *((vu16_t*) (0x03007FF8))
 
 #define REG_IE_FIELDS *((volatile Interrupt_Enabler_t*) (MEM_IO + 0x0200))
 #define REG_IF_FIELDS *((volatile Interrupt_Enabler_t*) (MEM_IO + 0x0202))

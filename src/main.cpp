@@ -1,7 +1,6 @@
-#include "gba.h"
 #include "bmp_types.hpp"
-#include "gba_def.h"
 #include "gba_functions.h"
+#define USE_BIOS_VSYNC
 #include "gba_inlines.h"
 #include "gba_stdio.h"
 #include "vec.hpp"
@@ -16,7 +15,6 @@
 #include "verdana.h"
 #include "conway.h"
 #include <cstdlib>
-#include <cstring>
 
 GridRow * cur_buf = bufa, * back_buf = bufb;
 const Vec2<u16_t> cursor_dims(GRID_CELL_LEN, GRID_CELL_LEN);
@@ -76,6 +74,11 @@ void draw_cur_buf(void);
 extern bool_t State_SaveGame(bool_t *cur_buf);
 extern bool_t Load_SaveGame(bool_t *cur_buf);
 extern void calc_prompt_len(void);
+
+extern "C" IWRAM_CODE void isr(void);
+
+
+
 #ifdef _TESTING_SAVE_SLOTS_
 typedef struct {
   char name[16];
@@ -794,6 +797,14 @@ void calculate_msg_widths(void) {
 
 int main(void) {
 #ifndef _TESTING_SAVE_SLOTS_
+#ifdef USE_BIOS_VSYNC
+  REG_IME = 0;
+  REG_IE = 1;
+  REG_DISPLAY_STAT = 8;
+  REG_ISR_MAIN = isr;
+  REG_IME = 1;
+
+#endif
   calculate_msg_widths();
   REG_DISPLAY_CNT_SET_MODES(DCNT_V_MODE3, DCNT_BG_MODE2);
   draw_cur_buf();

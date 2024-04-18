@@ -58,4 +58,7 @@ BEGIN_FUNC_ARM(fast_memset32, CSEC_IWRAM)
 END_FUNC(fast_memset32)
 
 
-
+BEGIN_FUNC_THUMB(BIOS_vsync, CSEC_TEXT)
+  SWI #0x05
+  BX lr
+END_FUNC(BIOS_vsync)

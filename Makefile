@@ -33,7 +33,7 @@ AS=$(PREFIX)gcc
 OBJ_CPY=$(PREFIX)objcopy
 
 ARCH=-mthumb-interwork -mthumb
-IARCH=-mthumb-interwork -march
+IARCH=-mthumb-interwork -marm
 SPECS=-specs=gba.specs
 
 CFLAGS_BASE=-O2 -Wall -Wextra -fno-strict-aliasing -I$(INC)
@@ -66,6 +66,9 @@ $(TARGET).elf: $(C_OBJS) $(CXX_OBJS) $(S_OBJS)
 	$(LD) $^ $(LDFLAGS) -o $(BIN)/$@
 
 
+$(C_OBJS): $(ROM_C_OBJS) $(IWRAM_C_OBJS)
+
+$(CXX_OBJS): $(ROM_CXX_OBJS) $(IWRAM_CXX_OBJS)
 
 $(ROM_CXX_OBJS): $(BIN)/%.o : $(SRC)/%.cpp
 	$(CXX) -c $< $(ROM_CFLAGS) -o $@

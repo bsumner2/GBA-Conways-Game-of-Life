@@ -36,7 +36,7 @@ ARCH=-mthumb-interwork -mthumb
 IARCH=-mthumb-interwork -marm
 SPECS=-specs=gba.specs
 
-CFLAGS_BASE=-O2 -Wall -Wextra -fno-strict-aliasing -I$(INC)
+CFLAGS_BASE=-O2 -Wall -Wextra -fno-strict-aliasing -I$(INC) -DUSE_BIOS_VSYNC
 
 ROM_CFLAGS=$(CFLAGS_BASE) $(ARCH)
 IWRAM_CFLAGS=$(CFLAGS_BASE) $(IARCH) -mlong-calls
@@ -65,10 +65,6 @@ $(TARGET).gba: $(TARGET).elf
 $(TARGET).elf: $(C_OBJS) $(CXX_OBJS) $(S_OBJS)
 	$(LD) $^ $(LDFLAGS) -o $(BIN)/$@
 
-
-$(C_OBJS): $(ROM_C_OBJS) $(IWRAM_C_OBJS)
-
-$(CXX_OBJS): $(ROM_CXX_OBJS) $(IWRAM_CXX_OBJS)
 
 $(ROM_CXX_OBJS): $(BIN)/%.o : $(SRC)/%.cpp
 	$(CXX) -c $< $(ROM_CFLAGS) -o $@

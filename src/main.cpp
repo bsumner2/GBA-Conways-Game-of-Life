@@ -1,6 +1,5 @@
 #include "bmp_types.hpp"
 #include "gba_functions.h"
-#define USE_BIOS_VSYNC
 #include "gba_inlines.h"
 #include "gba_stdio.h"
 #include "vec.hpp"
@@ -75,7 +74,7 @@ extern bool_t State_SaveGame(bool_t *cur_buf);
 extern bool_t Load_SaveGame(bool_t *cur_buf);
 extern void calc_prompt_len(void);
 
-extern "C" IWRAM_CODE void isr(void);
+extern "C" void enable_irq(void);
 
 
 
@@ -798,11 +797,7 @@ void calculate_msg_widths(void) {
 int main(void) {
 #ifndef _TESTING_SAVE_SLOTS_
 #ifdef USE_BIOS_VSYNC
-  REG_IME = 0;
-  REG_IE = 1;
-  REG_DISPLAY_STAT = 8;
-  REG_ISR_MAIN = isr;
-  REG_IME = 1;
+  enable_irq();
 
 #endif
   calculate_msg_widths();
@@ -833,7 +828,6 @@ int main(void) {
   Prompt_Save_Slot(nullptr, 0);
   while (1) {
     vsync();
-
   }
 #endif
 }

@@ -1,4 +1,5 @@
 #include "bmp_types.hpp"
+#include "gba_def.h"
 #include "gba_functions.h"
 #include "gba_inlines.h"
 #include "gba_stdio.h"
@@ -611,6 +612,7 @@ int main(void) {
 #endif
   calculate_msg_widths();
   REG_DISPLAY_CNT_SET_MODES(DCNT_V_MODE3, DCNT_BG_MODE2);
+  
   draw_cur_buf();
   SimState state = SimState::PAUSE_NEUTRAL;
   pause_menu_draw_ui(true);

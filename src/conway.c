@@ -1,7 +1,7 @@
 #include "gba_types.h"
 #define _CONWAY_SRC_FILE_
 #include "conway.h"
-bool_t bufa[GRID_HEIGHT][GRID_WIDTH] = {0}, bufb[GRID_HEIGHT][GRID_WIDTH] = {0};
+EWRAM_BSS bool_t bufa[GRID_HEIGHT][GRID_WIDTH] = {0}, bufb[GRID_HEIGHT][GRID_WIDTH] = {0};
 
 /*
 void fast_memset32(void *dst, u8_t val, size_t byte_len) {

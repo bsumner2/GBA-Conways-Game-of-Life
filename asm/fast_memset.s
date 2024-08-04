@@ -1,7 +1,4 @@
-	.file	"tonc_ISR_Master_ctl.s"
-
 #include "tonc_asminc.h"
-
 @@ Credit: LibTonc's Fast memcpy 32 byte implementation
 BEGIN_FUNC_ARM(fast_memcpy32, CSEC_IWRAM)
   @@ Regs

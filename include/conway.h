@@ -30,7 +30,7 @@ extern "C" {
 typedef bool_t GridRow[GRID_WIDTH];
 
 #ifndef _CONWAY_SRC_FILE_
-extern bool_t bufa[GRID_HEIGHT][GRID_WIDTH], bufb[GRID_HEIGHT][GRID_WIDTH];
+extern EWRAM_BSS bool_t bufa[GRID_HEIGHT][GRID_WIDTH], bufb[GRID_HEIGHT][GRID_WIDTH];
 
 extern IWRAM_CODE void fast_memset32(void *dst, u32_t val, size_t word_ct);
 

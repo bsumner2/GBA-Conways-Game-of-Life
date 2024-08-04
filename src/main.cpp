@@ -11,7 +11,7 @@
 #include "save_btn.h"
 #include "load_btn.h"
 #include "help_btn.h"
-#include "verdana.h"
+#include "burtana.h"
 #include "conway.h"
 #include <cstdlib>
 
@@ -116,10 +116,10 @@ UX_Button
               [](void* arg) -> void {
                 CLEAR_SCREEN;
                 if (State_SaveGame((bool_t*)cur_buf)) {
-                  Mode3::Rect block(SAVE_MESSAGE_WIDTH, verdana_GlyphHeight, 0, SCREEN_HEIGHT - verdana_GlyphHeight);
+                  Mode3::Rect block(SAVE_MESSAGE_WIDTH, burtana_GlyphHeight, 0, SCREEN_HEIGHT - burtana_GlyphHeight);
                   block.FillDraw(0x0C84);
 
-                  Mode3_puts(SAVE_STATUS_MESSAGE, 0, SCREEN_HEIGHT - verdana_GlyphHeight, 0x7FFF);
+                  Mode3_puts(SAVE_STATUS_MESSAGE, 0, SCREEN_HEIGHT - burtana_GlyphHeight, 0x7FFF);
                   int i = 0;
                   while (++i& 0x3F)
                     vsync();
@@ -134,9 +134,9 @@ UX_Button
                 CLEAR_SCREEN;
                 if (Load_SaveGame((bool_t*)back_buf)) {
                   swap_bufs();
-                  Mode3::Rect block(LOAD_MESSAGE_WIDTH, verdana_GlyphHeight, 0, SCREEN_HEIGHT - verdana_GlyphHeight);
+                  Mode3::Rect block(LOAD_MESSAGE_WIDTH, burtana_GlyphHeight, 0, SCREEN_HEIGHT - burtana_GlyphHeight);
                   block.FillDraw(0x0C84);
-                  Mode3_puts(LOAD_STATUS_MESSAGE, 0, SCREEN_HEIGHT - verdana_GlyphHeight, 0x7FFF);
+                  Mode3_puts(LOAD_STATUS_MESSAGE, 0, SCREEN_HEIGHT - burtana_GlyphHeight, 0x7FFF);
                 
                   int i = 0;
                   while (++i&63)
@@ -185,7 +185,7 @@ UX_Button
                     "Controls:\n\x1b[0x03E0][Start]: \x1b[0x7fff]Pause/Unpause the simulation\n\x1b[0x7E6C]"
                     "[A]: \x1b[0x7FFF]Select a pause menu option,\n   (Draw/Erase Mode: Edit grid cell)\n"
                     "\x1b[0x001F][B]: \x1b[0x7FFF]Boost cursor move speed\n\x1b[0x7C00][Select]: \x1b[0x7FFF]\n     (Draw/Erase Mode: Back to pause menu)\n");
-                Mode3_printf(help_directions_bg.x + 2, help_directions_bg.y + help_directions_bg.height - 2 - verdana_GlyphHeight, 0x7FFF, "Press \x1b[0x001F][B]\x1b[0x7FFF] to exit help screen");
+                Mode3_printf(help_directions_bg.x + 2, help_directions_bg.y + help_directions_bg.height - 2 - burtana_GlyphHeight, 0x7FFF, "Press \x1b[0x001F][B]\x1b[0x7FFF] to exit help screen");
                 while (!KEY_PRESSED(B))
                   vsync();
                 DEBOUNCE_KEY(B);
@@ -246,194 +246,6 @@ int UIButton_HoverIdx(Coordinate cursor_pos, Vec2<u16_t> cursor_dims) {
 
 
 
-/**
- * @brief Sets back buffer (back_buf) cell according to number of living
- * neighbors and current state on front buffer (cur_buf) */
-static inline void back_buffer_set(int x, int y, int cnt) {
-  back_buf[GRID_AT(x,y)] = cnt==3 || (cur_buf[GRID_AT(x,y)] && cnt==2);
-}
-
-
-void eval_corners(void) {
-  // Top left corner (0, 0) cell
-  int cnt = 0;
-  for (int i = 0; i < 2; ++i) {
-    if (cur_buf[GRID_AT(i, 1)])
-      ++cnt;
-#ifdef WRAP_AROUND
-    if (cur_buf[GRID_AT(i, GRID_HEIGHT-1)])
-      ++cnt;
-    if (cur_buf[GRID_AT(GRID_ROW_LAST_IDX, i)])
-      ++cnt;
-#endif
-    continue;
-  }
-#ifdef WRAP_AROUND
-  if (cur_buf[GRID_AT(GRID_ROW_LAST_IDX, GRID_HEIGHT-1)])
-    ++cnt;
-#endif
-  if (cur_buf[GRID_AT(1, 0)])
-    ++cnt;
-
-  back_buffer_set(0, 0, cnt);
-  
-  // Top right corner (GRID_ROW_LAST_IDX, 0) cell
-  cnt = 0;
-/*  for (int i = GRID_ROW_LAST_IDX-1; i < GRID_WIDTH; ++i) {
-    if (cur_buf[GRID_AT(i, 1)])
-      ++cnt;
-    continue;
-  }*/
-  for (int i = 0; i < 2; ++i) {
-    if (cur_buf[GRID_AT(GRID_ROW_LAST_IDX-i, 1)])
-      ++cnt;
-#ifdef WRAP_AROUND
-    if (cur_buf[GRID_AT(GRID_ROW_LAST_IDX-i, GRID_HEIGHT-1)])
-      ++cnt;
-    if (cur_buf[GRID_AT(0, i)])
-      ++cnt;
-#endif
-    continue;
-  }
-#ifdef WRAP_AROUND
-  if (cur_buf[GRID_AT(0, GRID_HEIGHT-1)])
-    ++cnt;
-#endif
-  if (cur_buf[GRID_AT(GRID_ROW_LAST_IDX-1, 0)])
-    ++cnt;
-
-  back_buffer_set(GRID_ROW_LAST_IDX, 0, cnt);
-  
-  // Bottom left corner (0, GRID_COL_LAST_IDX) cell
-  cnt = 0;
-  for (int i = 0; i < 2; ++i) {
-    if (cur_buf[GRID_AT(i, GRID_COL_LAST_IDX-1)])
-      ++cnt;
-#ifdef WRAP_AROUND
-    if (cur_buf[GRID_AT(GRID_ROW_LAST_IDX, GRID_COL_LAST_IDX-i)])
-      ++cnt;
-    if (cur_buf[GRID_AT(i, 0)])
-      ++cnt;
-#endif
-    continue;
-  }
-#ifdef WRAP_AROUND
-  if (cur_buf[GRID_AT(GRID_ROW_LAST_IDX, 0)])
-    ++cnt;
-#endif
-  if (cur_buf[GRID_AT(1, GRID_COL_LAST_IDX)])
-    ++cnt;
-  back_buffer_set(0, GRID_COL_LAST_IDX, cnt);
-
-  // Bottom right corner (GRID_ROW_LAST_IDX, GRID_COL_LAST_IDX) cell
-  cnt = 0;
-  /*for (int i = GRID_ROW_LAST_IDX-1; i < GRID_WIDTH; ++i) {
-    if (cur_buf[GRID_AT(i, GRID_COL_LAST_IDX-1)])
-      ++cnt;
-    continue;
-  }*/
-  for (int i = 0; i < 2; ++i) {
-    if (cur_buf[GRID_AT(GRID_ROW_LAST_IDX-i, GRID_COL_LAST_IDX-1)])
-      ++cnt;
-#ifdef WRAP_AROUND
-    if (cur_buf[GRID_AT(GRID_ROW_LAST_IDX-i, 0)])
-      ++cnt;
-    if (cur_buf[GRID_AT(0, GRID_COL_LAST_IDX-i)])
-      ++cnt;
-#endif
-    continue;
-  }
-#ifdef WRAP_AROUND
-  if (cur_buf[GRID_AT(0,0)])
-    ++cnt;
-#endif
-  
-  if (cur_buf[GRID_AT(GRID_ROW_LAST_IDX-1, GRID_COL_LAST_IDX)])
-    ++cnt;
-
-  back_buffer_set(GRID_ROW_LAST_IDX, GRID_COL_LAST_IDX, cnt);
-}
-
-void eval_edge_rows(void) {
-  int cnt_top, cnt_btm, i, j;
-  for (i = 1; i < GRID_ROW_LAST_IDX; ++i) {
-    cnt_top = cnt_btm = 0;
-    for (j = -1; j < 2; ++j) {
-      if (cur_buf[GRID_AT(i+j, 1)])
-        ++cnt_top;
-      if (cur_buf[GRID_AT(i+j, GRID_COL_LAST_IDX-1)])
-        ++cnt_btm;
-#ifdef WRAP_AROUND
-      if (cur_buf[GRID_AT(i+j, GRID_COL_LAST_IDX)])
-        ++cnt_top;
-      if (cur_buf[GRID_AT(i+j, 0)])
-        ++cnt_btm;
-#endif
-    }
-    if (cur_buf[GRID_AT(i-1, 0)])
-      ++cnt_top;
-    if (cur_buf[GRID_AT(i+1, 0)])
-      ++cnt_top;
-
-    if (cur_buf[GRID_AT(i-1, GRID_COL_LAST_IDX)])
-      ++cnt_btm;
-    if (cur_buf[GRID_AT(i+1, GRID_COL_LAST_IDX)])
-      ++cnt_btm;
-    back_buffer_set(i, 0, cnt_top);
-    back_buffer_set(i, GRID_COL_LAST_IDX, cnt_btm);
-  }
-}
-
-void eval_edge_columns(void) {
-  int cnt_left, cnt_right, i, j;
-  for (i = 1; i < GRID_COL_LAST_IDX; ++i) {
-    cnt_left = cnt_right = 0;
-    for (j = -1; j < 2; ++j) {
-      if (cur_buf[GRID_AT(1, i+j)])
-        ++cnt_left;
-      if (cur_buf[GRID_AT(GRID_ROW_LAST_IDX-1, i+j)])
-        ++cnt_right;
-#ifdef WRAP_AROUND
-      if (cur_buf[GRID_AT(GRID_ROW_LAST_IDX, i+j)])
-        ++cnt_left;
-      if (cur_buf[GRID_AT(0, i+j)])
-        ++cnt_right;
-#endif
-    }
-    if (cur_buf[GRID_AT(0, i-1)])
-      ++cnt_left;
-    if (cur_buf[GRID_AT(0, i+1)])
-      ++cnt_left;
-
-    if (cur_buf[GRID_AT(GRID_ROW_LAST_IDX, i-1)])
-      ++cnt_right;
-    if (cur_buf[GRID_AT(GRID_ROW_LAST_IDX, i+1)])
-      ++cnt_right;
-    back_buffer_set(0, i, cnt_left);
-    back_buffer_set(GRID_ROW_LAST_IDX, i, cnt_right);
-  }
-}
-
-void eval_body(void) {
-  int i, j, cnt;
-  for (i = 1; i < GRID_COL_LAST_IDX; ++i) {
-    for (j = 1; j < GRID_ROW_LAST_IDX; ++j) {
-      cnt = 0;
-      for (int k = -1; k < 2; ++k) {
-        if (cur_buf[GRID_AT(j+k, i-1)])
-          ++cnt;
-        if (cur_buf[GRID_AT(j+k, i+1)])
-          ++cnt;
-      }
-      if (cur_buf[GRID_AT(j-1, i)])
-        ++cnt;
-      if (cur_buf[GRID_AT(j+1, i)])
-        ++cnt;
-
-      back_buffer_set(j, i, cnt);
-    }
-  }
-}
 
 void swap_bufs(void) {
   GridRow* new_back_buf = cur_buf;
@@ -441,12 +253,9 @@ void swap_bufs(void) {
   back_buf = new_back_buf;
 }
 
-void step_sim(void) {
-  eval_corners();
-  eval_edge_rows();
-  eval_edge_columns();
-  eval_body();
-}
+
+IWRAM_CODE void step_sim(GridRow *cur_buf, GridRow *back_buf);
+
 
 void draw_cur_buf(void) {
   Mode3::Rect cell(GRID_CELL_LEN);
@@ -638,7 +447,7 @@ void run_sim(SimState& state) {
       continue;
     return;
   }
-  step_sim();
+  step_sim(cur_buf, back_buf);
   swap_bufs();
   draw_cur_buf();
 }
@@ -787,10 +596,10 @@ void calculate_msg_widths(void) {
   calc_prompt_len();
   SAVE_MESSAGE_WIDTH = LOAD_MESSAGE_WIDTH = 0;
   for (int i = 0; i < SAVE_MSG_LEN; ++i) {
-    SAVE_MESSAGE_WIDTH += verdana_GlyphWidths[SAVE_STATUS_MESSAGE[i] - ' '];
+    SAVE_MESSAGE_WIDTH += burtana_GlyphWidths[SAVE_STATUS_MESSAGE[i] - ' '];
   }
   for (int i = 0; i < LOAD_MSG_LEN; ++i) {
-    LOAD_MESSAGE_WIDTH += verdana_GlyphWidths[LOAD_STATUS_MESSAGE[i] - ' '];
+    LOAD_MESSAGE_WIDTH += burtana_GlyphWidths[LOAD_STATUS_MESSAGE[i] - ' '];
   }
 }
 

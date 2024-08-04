@@ -4,7 +4,7 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include "verdana.h"
+#include "burtana.h"
 
 #include "gba_def.h"
 #include "gba_types.h"
@@ -12,7 +12,7 @@
 // 1bpp 8x8 pixel buffer represents glyph
 //typedef enum { } SymType;
 
-static const u8_t *verdana = (u8_t*)verdana_GlyphData;
+static const u8_t *burtana = (u8_t*)burtana_GlyphData;
 
 static const char ESC_FLAG_CHAR = '\x1b';
  
@@ -69,7 +69,7 @@ bool_t Mode3_printf(u32_t x, u32_t y, u16_t color, const char *restrict fmt,
   if (!fmt)
     return false;
   
-  if (y + verdana_GlyphHeight > SCREEN_HEIGHT)
+  if (y + burtana_GlyphHeight > SCREEN_HEIGHT)
     return false;
 
   va_list args;
@@ -100,9 +100,9 @@ bool_t Mode3_printf(u32_t x, u32_t y, u16_t color, const char *restrict fmt,
   while ((tmp = *cursor++)) {
     if (tmp < ' ') {
       if (tmp=='\n') {
-        y+=verdana_GlyphHeight;
+        y+=burtana_GlyphHeight;
         x = startx;
-        if (y+verdana_GlyphHeight > SCREEN_HEIGHT)
+        if (y+burtana_GlyphHeight > SCREEN_HEIGHT)
           return false;
       } else if (tmp == ESC_FLAG_CHAR) {
         if ((col = parse_color(&cursor)) & PARSE_ESC_CLR_ERROR_FLAG) {
@@ -114,19 +114,19 @@ bool_t Mode3_printf(u32_t x, u32_t y, u16_t color, const char *restrict fmt,
       continue;
     }
     char_idx = tmp - ' ';
-    if (char_idx >= verdana_GlyphCount)
+    if (char_idx >= burtana_GlyphCount)
       continue;
-    curr_width = verdana_GlyphWidths[char_idx];
+    curr_width = burtana_GlyphWidths[char_idx];
 
     if (x+curr_width > SCREEN_WIDTH) {
-      y+=verdana_GlyphHeight;
+      y+=burtana_GlyphHeight;
       x = startx;
-      if (y+verdana_GlyphHeight > SCREEN_HEIGHT)
+      if (y+burtana_GlyphHeight > SCREEN_HEIGHT)
         return false;
     }
 
-    cur_glyph = (u8_t*)(verdana + verdana_CellSize*char_idx);
-    for (int i = 0; i < verdana_GlyphHeight; ++i) {
+    cur_glyph = (u8_t*)(burtana + burtana_CellSize*char_idx);
+    for (int i = 0; i < burtana_GlyphHeight; ++i) {
       glyphrow = cur_glyph[i];
       vbuf_row = (y+i)*SCREEN_WIDTH + x + VIDEO_BUF;
       for (int j = 0; j < curr_width; ++j) {
@@ -162,29 +162,29 @@ bool_t Mode3_puts(const char* restrict s, int x, int y, u16_t color) {
   u16_t curr_width;
   char c;
   u8_t tmp;
-  if (y + verdana_GlyphHeight > SCREEN_HEIGHT)
+  if (y + burtana_GlyphHeight > SCREEN_HEIGHT)
     return false;
   while ((c = *cur++)) {
     if (c < ' ') {
       if (c=='\n') {
         x = startx;
-        y+=verdana_GlyphHeight;
+        y+=burtana_GlyphHeight;
       }
       continue;
     }
     char_idx = c-' ';
-    if (char_idx >= verdana_GlyphCount)
+    if (char_idx >= burtana_GlyphCount)
       continue;
-    curr_width = verdana_GlyphWidths[char_idx];
+    curr_width = burtana_GlyphWidths[char_idx];
 
 
     if (x+curr_width > SCREEN_WIDTH) {
-      y += verdana_GlyphHeight, x = startx;
-      if (y + verdana_GlyphHeight > SCREEN_HEIGHT)
+      y += burtana_GlyphHeight, x = startx;
+      if (y + burtana_GlyphHeight > SCREEN_HEIGHT)
         return false;
     }
-    curr_glyph = (u8_t*)(verdana + verdana_CellSize*char_idx);
-    for (int i = 0; i < verdana_CellHeight; ++i) {
+    curr_glyph = (u8_t*)(burtana + burtana_CellSize*char_idx);
+    for (int i = 0; i < burtana_CellHeight; ++i) {
       tmp = curr_glyph[i];
       vbuf_row = &VIDEO_BUF[x + SCREEN_WIDTH*(i+y)];
       //vbuf_row = (y+i)*SCREEN_WIDTH + x + VIDEO_BUF;
@@ -206,12 +206,12 @@ bool_t Mode3_putchar(u32_t x, u32_t y, char c, u16_t color) {
   if (c <= ' ' ||c >= 127)
     return false;
   int idx = c - ' ';
-  u16_t width = verdana_GlyphWidths[idx];
-  if (y+verdana_GlyphHeight>SCREEN_HEIGHT || x+width>SCREEN_WIDTH)
+  u16_t width = burtana_GlyphWidths[idx];
+  if (y+burtana_GlyphHeight>SCREEN_HEIGHT || x+width>SCREEN_WIDTH)
     return false;
   u16_t *vbuf_row;
-  u8_t *glyph = (u8_t*)(verdana + idx*verdana_CellSize), tmp;
-  for(int i = 0; i < verdana_GlyphHeight; ++i) {
+  u8_t *glyph = (u8_t*)(burtana + idx*burtana_CellSize), tmp;
+  for(int i = 0; i < burtana_GlyphHeight; ++i) {
     vbuf_row = &VIDEO_BUF[x + SCREEN_WIDTH*(i+y)];
     tmp = glyph[i];
     for (int j = 0; j < width; ++j) {

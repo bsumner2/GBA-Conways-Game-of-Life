@@ -6,7 +6,7 @@
 #include "gba_stdio.h"
 #include "conway.h"
 #include "gba_util_macros.h"
-#include "verdana.h"
+#include "burtana.h"
 
 #include <cstddef>
 #include <cstdlib>
@@ -31,7 +31,7 @@ EWRAM_BSS Save_Slot_t _g_saves[MAX_SAVES];
 #define SLOT_DISPLAY_WIDTH 136
 #define SLOT_BORDER_LEN 2
 #define SLOT_TEXT_LEFT_PAD 2
-#define SLOT_DISPLAY_HEIGHT verdana_CellHeight
+#define SLOT_DISPLAY_HEIGHT burtana_CellHeight
 static const int SLOT_X_ALIGNMENT = ((SCREEN_WIDTH-128)>>1);
 static const int SLOT_Y_ALIGNMENT = ((SCREEN_HEIGHT - (SAVE_SLOTS_PER_PAGE+1)*SLOT_DISPLAY_HEIGHT)>>1);
 #define PROMPT_BG 0x10A5
@@ -53,7 +53,7 @@ static int prompt_directions_message_width = 0;
 static int prompt_directions_message_height = 0;
 
 void Draw_keyboard(int idx, bool_t caps_lock) {
-  static Mode3::Rect charbox(verdana_CellWidth+2, verdana_GlyphHeight+2, 0, 18);
+  static Mode3::Rect charbox(burtana_CellWidth+2, burtana_GlyphHeight+2, 0, 18);
   int upper_row_startx = (SCREEN_WIDTH - 8*charbox.width)>>1,
       lower_row_startx = (SCREEN_WIDTH -10*charbox.width)>>1, curr = 0, ofs = 'a';
   if (caps_lock)
@@ -103,7 +103,7 @@ void Draw_keyboard(int idx, bool_t caps_lock) {
 
 
 void update_keyboard(int prev_hl, int new_hl, bool_t caps) {
-  static Mode3::Rect charbox(verdana_CellWidth+2, verdana_GlyphHeight+2, 0, 18);
+  static Mode3::Rect charbox(burtana_CellWidth+2, burtana_GlyphHeight+2, 0, 18);
   int upper_row_startx = (SCREEN_WIDTH - 8*charbox.width)>>1,
       lower_row_startx = (SCREEN_WIDTH -10*charbox.width)>>1, ofs = 'a';
   if (caps)
@@ -183,8 +183,8 @@ void update_keyboard(int prev_hl, int new_hl, bool_t caps) {
 #define INPUT_SEL_FG 0x77ED
 
 int Mode3_gets(char *buf, int maxlen) {
-  Mode3::Rect charbox(verdana_CellWidth+2, 2+verdana_GlyphHeight, (SCREEN_WIDTH - (verdana_CellWidth+2)*maxlen)>>1, 0), 
-    caps(26+2, 2+verdana_GlyphHeight, SCREEN_WIDTH-2-26-2, 18), backspace(10+2, 2+verdana_GlyphHeight, caps.x, caps.y + caps.height);
+  Mode3::Rect charbox(burtana_CellWidth+2, 2+burtana_GlyphHeight, (SCREEN_WIDTH - (burtana_CellWidth+2)*maxlen)>>1, 0), 
+    caps(26+2, 2+burtana_GlyphHeight, SCREEN_WIDTH-2-26-2, 18), backspace(10+2, 2+burtana_GlyphHeight, caps.x, caps.y + caps.height);
   int inbox_startx = charbox.x, inbox_y = charbox.y;
   int inbox_cursor = 0, kbd_cursor = 0, prev;
   static const int space_idx = 26, caps_idx = 27, backspace_idx = 28;
@@ -242,7 +242,7 @@ int Mode3_gets(char *buf, int maxlen) {
   Mode3_puts("<-", backspace.x+1, backspace.y+1, SLOT_FG);
 
   vsync();
-  Mode3_printf(0, SCREEN_HEIGHT - verdana_GlyphHeight, 0x7FFF, "\x1b[0x001F][B]: Cancel Save  \x1b[0x03E0][Start]: Confirm Save");
+  Mode3_printf(0, SCREEN_HEIGHT - burtana_GlyphHeight, 0x7FFF, "\x1b[0x001F][B]: Cancel Save  \x1b[0x03E0][Start]: Confirm Save");
   while (1) {
     vsync();
     
@@ -544,16 +544,16 @@ void calc_prompt_len(void) {
   int idx, tmp = 0;
   while ((idx = *cursor++) != '\n') {
     idx -= ' ';
-    tmp += verdana_GlyphWidths[idx];
+    tmp += burtana_GlyphWidths[idx];
   }
   
   while ((idx = *cursor++)) {
     idx -= ' ';
-    prompt_directions_message_width += verdana_GlyphWidths[idx];
+    prompt_directions_message_width += burtana_GlyphWidths[idx];
   }
   
   prompt_directions_message_width = tmp > prompt_directions_message_width ? tmp : prompt_directions_message_width;
-  prompt_directions_message_height = verdana_GlyphHeight*2;
+  prompt_directions_message_height = burtana_GlyphHeight*2;
 
   
 }
